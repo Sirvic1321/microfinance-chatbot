@@ -1,7 +1,6 @@
-
 import streamlit as st
 from chatbot import FAQChatbot
-
+# Streamlit app for the FAQ Chatbot
 # --- Load the chatbot ---
 @st.cache_resource
 def load_bot():
