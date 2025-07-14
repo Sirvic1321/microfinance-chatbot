@@ -1,4 +1,5 @@
-import streamlit as stfrom chatbot import FAQChatbot
+import streamlit as st
+from chatbot import FAQChatbot
 # --- Load the chatbot ---@st.cache_resourcedef load_bot():    return FAQChatbot("faq_clean.csv")
 bot = load_bot()
 # --- App Title ---st.title(" TrustMicro - FAQ Chatbot")
