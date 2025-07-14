@@ -16,13 +16,13 @@ class FAQChatbot:
         self.embedder = SentenceTransformer('all-MiniLM-L6-v2')
         self.question_embeddings = self.embedder.encode(self.questions, convert_to_tensor=True)
 
-    def get_best_match(self, user_input):
-        user_embedding = self.embedder.encode(user_input, convert_to_tensor=True)
-        similarities = util.cos_sim(user_embedding, self.question_embeddings)[0].cpu().numpy()
-        best_idx = similarities.argmax()
-        best_score = similarities[best_idx]
-        # Return answer and score
-        return self.questions[best_idx], self.answers[best_idx], best_score
+   def get_best_match(self, user_input):
+    user_embedding = self.embedder.encode(user_input, convert_to_tensor=True)
+    similarities = util.cos_sim(user_embedding, self.question_embeddings)[0].cpu().numpy()
+    best_idx = similarities.argmax()
+    best_score = similarities[best_idx]
+    return self.questions[best_idx], self.answers[best_idx], float(best_score)  # ensure it's a Python float
+
 
     def get_top_n_matches(self, user_input, n=3):
         user_embedding = self.embedder.encode(user_input, convert_to_tensor=True)
