@@ -6,14 +6,13 @@ from sklearn.metrics.pairwise import cosine_similarity
 class FAQChatbot:
     def __init__(self, csv_path):
         self.faqs = pd.read_csv(csv_path, encoding='cp1252')
-        self.faqs.columns.str.strip().tr.lower()
-
+        # Clean column names
+        self.faqs.columns = self.faqs.columns.str.strip().str.lower()
         # Remove any rows with missing question or answer
-self.faqs = self.faqs.dropna(subset=['question', 'answer'])
+        self.faqs = self.faqs.dropna(subset=['question', 'answer'])
 
         self.questions = self.faqs['question'].tolist()
         self.answers = self.faqs['answer'].tolist()
-
         self.vectorizer = TfidfVectorizer()
         self.question_vectors = self.vectorizer.fit_transform(self.questions)
 
