@@ -6,8 +6,10 @@ class FAQChatbot:
     def __init__(self, csv_path):
         self.faqs = pd.read_csv(csv_path, encoding='cp1252')
         self.faqs.columns = self.faqs.columns.str.strip().str.lower()
+
         # Remove any rows with missing question or answer
         self.faqs = self.faqs.dropna(subset=['question', 'answer'])
+
         self.questions = self.faqs['question'].tolist()
         self.answers = self.faqs['answer'].tolist()
         self.vectorizer = TfidfVectorizer()
@@ -43,4 +45,4 @@ class FAQChatbot:
         new_row = pd.DataFrame({'question': [user_input]})
         df = pd.concat([df, new_row], ignore_index=True)
         df.to_csv(path, index=False)
-   
+
