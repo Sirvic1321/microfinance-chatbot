@@ -4,7 +4,7 @@ from sentence_transformers import SentenceTransformer, util
 
 class FAQChatbot:
     def __init__(self, csv_path):
-        self.faqs = pd.read_csv(csv_path, encoding='cp1252')
+        self.faqs = pd.read_csv(csv_path, encoding='utf-8')
         self.faqs.columns = self.faqs.columns.str.strip().str.lower()
 
         # Remove any rows with missing question or answer
