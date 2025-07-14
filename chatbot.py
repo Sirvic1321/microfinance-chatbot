@@ -1,3 +1,4 @@
+import os
 import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
@@ -37,6 +38,7 @@ class FAQChatbot:
         return results
 
     def save_unanswered(self, user_input, path='logs/unknown_questions.csv'):
+        os.makedirs(os.path.dirname(path), exist_ok=True)
         try:
             df = pd.read_csv(path)
         except FileNotFoundError:
