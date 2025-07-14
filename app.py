@@ -4,7 +4,7 @@ from chatbot import FAQChatbot
 # --- Load the chatbot ---
 @st.cache_resource
 def load_bot():
-    return FAQChatbot("faq_cleansed.csv")
+    return FAQChatbot("faq_cleanee.csv")
 
 bot = load_bot()
 
