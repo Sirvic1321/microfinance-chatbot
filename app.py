@@ -26,4 +26,4 @@ if user_input:
         st.success(f"**Answer:** {answer}")
 
 st.markdown("---")
-st.caption("Powered by TrustMicro AI")
+st.caption("Powered by TrustMicro AI ")
