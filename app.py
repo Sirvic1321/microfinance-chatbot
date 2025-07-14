@@ -11,17 +11,17 @@ bot = load_bot()
 # --- App Title ---
 st.title("TrustMicro - FAQ Chatbot")
 st.markdown("""
-Welcome to the TrustMicro Microfinance Bank FAQ Chatbot.  Type your question below and get instant answers!
+Hi I'm your TrustMicro Microfinance Assistant.
 """)
 
 # --- User Input ---
-user_input = st.text_input("Ask your question:")
+user_input = st.text_input("Ask me anything about loans, savings, repayments, etc.:")
 
 # --- Process Input ---
 if user_input:
     question, answer, score = bot.get_best_match(user_input)
     if score < 0.7:
-        st.error("I'm sorry, I don't have that answer right now. Please contact our support team for help.")
+        st.error("I'm sorry, I didn't understand that. Could you rephrase your query please?")
         bot.save_unanswered(user_input)
     else:
         st.success(f"**Answer:** {answer}")
