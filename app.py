@@ -15,7 +15,7 @@ Hi I'm your TrustMicro Microfinance Assistant.
 """)
 
 # --- User Input ---
-user_input = st.text_input("Ask me anything about loans, savings, repayments, etc.:")
+user_input = st.text_input("Ask me anything about loans, savings, repayments, etc. and I'll do my best to help you:")
 
 # --- Process Input ---
 if user_input:
