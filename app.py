@@ -20,8 +20,9 @@ user_input = st.text_input("Ask your question:")
 # --- Process Input ---
 if user_input:
     question, answer, score = bot.get_best_match(user_input)
-    if score < 0.3:
-        st.error("Sorry, I don't have an answer for that. Please try asking something else.")
+    if score < 0.7:
+        st.error("I'm sorry, I don't have that answer right now. Please contact our support team for help.")
+        bot.save_unanswered(user_input)
     else:
         st.success(f"**Answer:** {answer}")
 

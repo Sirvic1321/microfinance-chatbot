@@ -1,7 +1,6 @@
 import os
 import pandas as pd
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.metrics.pairwise import cosine_similarity
+from sentence_transformers import SentenceTransformer, util
 
 class FAQChatbot:
     def __init__(self, csv_path):
@@ -13,20 +12,21 @@ class FAQChatbot:
 
         self.questions = self.faqs['question'].tolist()
         self.answers = self.faqs['answer'].tolist()
-        self.vectorizer = TfidfVectorizer()
-        self.question_vectors = self.vectorizer.fit_transform(self.questions)
+        # Sentence Embeddings
+        self.embedder = SentenceTransformer('all-MiniLM-L6-v2')
+        self.question_embeddings = self.embedder.encode(self.questions, convert_to_tensor=True)
 
     def get_best_match(self, user_input):
-        user_vec = self.vectorizer.transform([user_input])
-        similarities = cosine_similarity(user_vec, self.question_vectors).flatten()
+        user_embedding = self.embedder.encode(user_input, convert_to_tensor=True)
+        similarities = util.cos_sim(user_embedding, self.question_embeddings)[0].cpu().numpy()
         best_idx = similarities.argmax()
         best_score = similarities[best_idx]
         # Return answer and score
         return self.questions[best_idx], self.answers[best_idx], best_score
 
     def get_top_n_matches(self, user_input, n=3):
-        user_vec = self.vectorizer.transform([user_input])
-        similarities = cosine_similarity(user_vec, self.question_vectors).flatten()
+        user_embedding = self.embedder.encode(user_input, convert_to_tensor=True)
+        similarities = util.cos_sim(user_embedding, self.question_embeddings)[0].cpu().numpy()
         top_indices = similarities.argsort()[-n:][::-1]
         results = []
         for idx in top_indices:
