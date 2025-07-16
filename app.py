@@ -1,4 +1,5 @@
 import streamlit as st
+import random
 from chatbot import FAQChatbot
 
 # --- Page Configuration ---
@@ -46,49 +47,86 @@ st.markdown(
 )
 st.divider()
 
-# --- Suggested Questions (Top 4 from CSV) ---
-st.subheader("💡 Try asking:")
-top_questions = [
+# --- Master Question Pool (from your CSV or defined here) ---
+master_questions = [
     "How do I apply for a loan?",
     "What are the requirements for opening an account?",
     "How do I repay my loan?",
-    "What is the interest rate on savings?"
+    "What is the interest rate on savings?",
+    "What documents do I need for a loan?",
+    "How long does it take to get a loan approved?",
+    "How can I check my loan balance?",
+    "Can I repay my loan early?",
+    "Do you offer group loans?",
+    "What is the minimum savings amount?",
+    "How do I withdraw from my savings?",
+    "Is there a penalty for early withdrawal?",
+    "Can I open an account online?",
+    "What is the maximum loan amount?",
+    "Do you offer business loans?",
+    "How are interest rates calculated?",
+    "How often do I make repayments?",
+    "Do you offer mobile banking?",
+    "What happens if I miss a repayment?",
+    "Can I top up my existing loan?",
+    "Are there any hidden charges?",
+    "What is the customer care number?",
+    "Where are your branches located?",
+    "How secure is my account?",
+    "What is the loan tenure?",
+    "Can I get a statement of account?",
+    "How do I update my account details?",
+    "Do you require collateral?",
+    "How do I close my account?",
+    "Can I nominate someone on my account?",
+    "How do I reset my PIN?",
+    "Do you offer ATM services?",
+    "Are there charges on withdrawals?",
+    "Can I get a loan without salary?",
+    "What happens on loan default?",
+    "How do I change my repayment schedule?",
+    "What are your operating hours?",
+    "Do you have an app?",
+    "How do I contact support?"
 ]
 
-# Handle suggestion click logic
+# --- Randomly select 4 suggestions per session refresh ---
+random.shuffle(master_questions)
+suggestions = master_questions[:4]
+
+# --- Suggested Questions UI ---
+st.subheader("💡 Try asking one of these:")
+
+# Use columns to make them look like cards
+cols = st.columns(4)
 suggested_input = None
-for i, q in enumerate(top_questions):
-    if st.button(q, key=f"suggested_{i}"):
-        suggested_input = q  # store the selected question
+
+for i, (col, question) in enumerate(zip(cols, suggestions)):
+    if col.button(f"❓ {question}", key=f"suggested_{i}"):
+        suggested_input = question
+
+st.divider()
 
 # --- Manual Input Field ---
-st.divider()
 st.subheader("🔎 Ask your own question:")
 with st.form(key="chat_form", clear_on_submit=True):
     user_input = st.text_input("Type your question here...")
     submitted = st.form_submit_button("Send")
 
-# Determine source of input
+# --- Determine which input to use ---
 final_input = suggested_input if suggested_input else (user_input if submitted else None)
 
-# --- Process Input (whether from suggestions or manual input) ---
+# --- Process Input ---
 if final_input:
     question, answer, score = bot.get_best_match(final_input)
 
-    if score >= 0.8:
+    if score >= 0.7:
         st.success(f"✅ **Answer:** {answer}")
-    elif score >= 0.6:
-        st.warning(
-            f"🤔 *I think you might be asking:*  \n"
-            f"**Q:** {question}  \n\n"
-            f"**A:** {answer}  \n\n"
-            "If this doesn't help, please try rephrasing! ✨"
-        )
     else:
-        st.error("⚠️ I'm sorry, I couldn't confidently answer that. Please rephrase.")
+        st.error("⚠️ I'm sorry, I couldn't confidently answer that. Please try rephrasing your question.")
         bot.save_unanswered(final_input)
         st.info("✨ *Your question has been saved for review to improve this assistant.*")
 
 # --- Footer ---
 st.divider()
-st.caption("🧭 Powered by TrustMicro AI | Built with ❤️ using Sentence Transformers and Streamlit")
+st.caption("🧭 Powered by TrustMicro AI")
