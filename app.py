@@ -90,20 +90,20 @@ master_questions = [
     "How do I contact support?"
 ]
 
-# --- Randomly select 4 suggestions per session refresh ---
-random.shuffle(master_questions)
-suggestions = master_questions[:4]
+# --- Setup Session State ---
+if "suggested_input" not in st.session_state:
+    st.session_state.suggested_input = None
+if "suggestions" not in st.session_state:
+    random.shuffle(master_questions)
+    st.session_state.suggestions = master_questions[:4]
 
 # --- Suggested Questions UI ---
 st.subheader("💡 Try asking one of these:")
 
-# Use columns to make them look like cards
 cols = st.columns(4)
-suggested_input = None
-
-for i, (col, question) in enumerate(zip(cols, suggestions)):
+for i, (col, question) in enumerate(zip(cols, st.session_state.suggestions)):
     if col.button(f"❓ {question}", key=f"suggested_{i}"):
-        suggested_input = question
+        st.session_state.suggested_input = question
 
 st.divider()
 
@@ -114,7 +114,11 @@ with st.form(key="chat_form", clear_on_submit=True):
     submitted = st.form_submit_button("Send")
 
 # --- Determine which input to use ---
-final_input = suggested_input if suggested_input else (user_input if submitted else None)
+final_input = None
+if submitted and user_input:
+    final_input = user_input
+elif st.session_state.suggested_input:
+    final_input = st.session_state.suggested_input
 
 # --- Process Input ---
 if final_input:
@@ -126,6 +130,9 @@ if final_input:
         st.error("⚠️ I'm sorry, I couldn't confidently answer that. Please try rephrasing your question.")
         bot.save_unanswered(final_input)
         st.info("✨ *Your question has been saved for review to improve this assistant.*")
+
+    # Reset suggested_input so it's not "sticky" after processing
+    st.session_state.suggested_input = None
 
 # --- Footer ---
 st.divider()
