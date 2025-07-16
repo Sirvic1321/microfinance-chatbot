@@ -1,4 +1,4 @@
-import import streamlit as st
+import streamlit as st
 from chatbot import FAQChatbot
 
 # --- Page configuration ---
@@ -91,7 +91,7 @@ if st.session_state.history:
         st.divider()
 
 # --- Footer ---
-st.caption("🧭 Powered by TrustMicro AI | Built with ❤️ using Sentence Transformers and Streamlit")import streamlit as st
+st.caption("🧭 Powered by TrustMicro AI | Built with ❤️ using Sentence Transformers and Streamlit")
 from chatbot import FAQChatbot
 
 # --- Page configuration ---
