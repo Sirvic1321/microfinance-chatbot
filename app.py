@@ -69,11 +69,14 @@ if st.session_state.history:
 else:
     st.info("🤖 Ready to answer your questions! Start by typing below.")
 
-# --- Input Field at Bottom ---
-user_input = st.chat_input("Type your question here...")
+
+# --- Input Field at Bottom (text input + button for instant response) ---
+with st.form(key="chat_form", clear_on_submit=True):
+    user_input = st.text_input("Type your question here...")
+    submitted = st.form_submit_button("Send")
 
 # --- Processing User Input Immediately ---
-if user_input:
+if submitted and user_input:
     question, answer, score = bot.get_best_match(user_input)
     response_text = ""
 
@@ -100,7 +103,6 @@ if user_input:
         "response": response_text,
         "score": score
     })
-    # Do not clear st.session_state.pending_input, Streamlit does not allow this for widget keys
 
 # --- Footer ---
 st.caption("🧭 Powered by TrustMicro AI")
