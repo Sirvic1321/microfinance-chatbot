@@ -29,7 +29,7 @@ with st.sidebar:
     )
     st.caption("🧭 Powered by TrustMicro AI")
 
-# --- Load and Cache Chatbot ---
+# --- Load Chatbot ---
 @st.cache_resource
 def load_bot():
     with st.spinner("Loading AI model... Please wait ⏳"):
@@ -37,7 +37,7 @@ def load_bot():
 
 bot = load_bot()
 
-# --- Initialize Session State ---
+# --- Session State Initialization ---
 if "suggestions_pool" not in st.session_state:
     st.session_state.suggestions_pool = [
         "How do I apply for a loan?",
@@ -73,95 +73,72 @@ if "suggestions_pool" not in st.session_state:
     ]
 
 if "suggestions" not in st.session_state:
-    # Priority initial questions
-    priority_questions = [
+    st.session_state.suggestions = [
         "How do I apply for a loan?",
         "How can I repay my loan?",
         "How do I open an account?",
         "What is the interest rate for loans?"
     ]
-    st.session_state.suggestions = priority_questions
 
-if "last_user_input" not in st.session_state:
-    st.session_state.last_user_input = ""
+if "final_input" not in st.session_state:
+    st.session_state.final_input = ""
 
-if "last_response" not in st.session_state:
-    st.session_state.last_response = ""
-    st.session_state.last_score = 0.0
+if "response_text" not in st.session_state:
+    st.session_state.response_text = ""
+    st.session_state.confidence_score = 0.0
 
-# --- Title and Welcome Message ---
+# --- Title ---
 st.title("💬 TrustMicro - Your AI FAQ Assistant")
-st.markdown(
-    """
-    Hello! I'm TrustMicro, your friendly Microfinance assistant.
-    Ask me about loans, savings, repayments, and more.
-    I'm here to help 24/7.
-    """
-)
+st.markdown("""
+Hello! I'm TrustMicro, your friendly Microfinance assistant.
+Ask me about loans, savings, repayments, and more. I'm here to help 24/7.
+""")
 st.divider()
 
-# --- Show last response if any ---
-if st.session_state.last_user_input and st.session_state.last_response:
-    with st.chat_message("user"):
-        st.markdown(f"🧑‍💼 **You:** {st.session_state.last_user_input}")
-
-    with st.chat_message("assistant"):
-        st.markdown(st.session_state.last_response)
-        st.caption(f"🤖 *Confidence Score:* `{st.session_state.last_score:.2f}`")
-
-st.divider()
-
-# --- Input Field ---
+# --- Chat Form ---
 with st.form(key="chat_form", clear_on_submit=True):
     user_input = st.text_input("Type your question here...")
     submitted = st.form_submit_button("Send")
 
-# --- Check if a suggestion was clicked ---
-suggestion_clicked = st.session_state.get("suggestion_clicked", None)
-
-final_input = None
 if submitted and user_input:
-    final_input = user_input
-elif suggestion_clicked:
-    final_input = suggestion_clicked
-    st.session_state.suggestion_clicked = None
+    st.session_state.final_input = user_input
 
-# --- Process the question ---
-if final_input:
-    question, answer, score = bot.get_best_match(final_input)
+# --- Suggestion Buttons ---
+st.subheader("💡 Quick Questions")
+cols = st.columns(2)
+for i, q in enumerate(st.session_state.suggestions):
+    if cols[i % 2].button(f"❓ {q}", key=f"btn_{i}"):
+        st.session_state.final_input = q
+
+# --- Answer Processing ---
+if st.session_state.final_input:
+    question, answer, score = bot.get_best_match(st.session_state.final_input)
+
     if score >= 0.85:
-        response_text = f"✅ **Answer:** {answer}"
+        response = f"✅ **Answer:** {answer}"
     elif score >= 0.65:
-        response_text = (
+        response = (
             f"🤔 *I think you might be asking:*  \n"
             f"**Q:** {question}  \n"
             f"**A:** {answer}  \n\n"
             f"If this doesn't help, please try rephrasing for a better match! ✨"
         )
     else:
-        response_text = (
+        response = (
             "⚠️ I'm sorry, I couldn't confidently answer that. "
             "Could you please rephrase your question?"
         )
-        bot.save_unanswered(final_input)
-        st.info("✨ *Your question has been saved for review to improve this assistant.*")
+        bot.save_unanswered(st.session_state.final_input)
+        st.info("✨ *Your question has been saved to improve this assistant.*")
 
-    st.session_state.last_user_input = final_input
-    st.session_state.last_response = response_text
-    st.session_state.last_score = score
+    st.markdown(f"🧑‍💼 **You:** {st.session_state.final_input}")
+    st.markdown(response)
+    st.caption(f"🤖 *Confidence Score:* `{score:.2f}`")
 
-    # Rotate suggestions to keep them fresh
+    # Refresh next suggestions
     st.session_state.suggestions = random.sample(
         st.session_state.suggestions_pool, 4
     )
 
-    # Force rerun to show new chat
-    st.experimental_rerun()
-
-# --- Suggestion Buttons ---
-st.subheader("💡 Quick Questions")
-cols = st.columns(2)
-for i, question in enumerate(st.session_state.suggestions):
-    col = cols[i % 2]
-    if col.button(f"❓ {question}", key=f"suggestion_{i}"):
-        st.session_state.suggestion_clicked = question
+    # Reset input
+    st.session_state.final_input = ""
