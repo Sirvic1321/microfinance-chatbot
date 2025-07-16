@@ -1,6 +1,6 @@
 import streamlit as st
-import random
 from chatbot import FAQChatbot
+import random
 
 # --- Page Configuration ---
 st.set_page_config(
@@ -37,90 +37,64 @@ def load_bot():
 
 bot = load_bot()
 
-# --- Master Questions Pool (from CSV or manually here) ---
-master_questions = [
-    "How do I apply for a loan?",
-    "What are the requirements for opening an account?",
-    "How do I repay my loan?",
-    "What is the interest rate on savings?",
-    "What documents do I need for a loan?",
-    "How long does it take to get a loan approved?",
-    "How can I check my loan balance?",
-    "Can I repay my loan early?",
-    "Do you offer group loans?",
-    "What is the minimum savings amount?",
-    "How do I withdraw from my savings?",
-    "Is there a penalty for early withdrawal?",
-    "Can I open an account online?",
-    "What is the maximum loan amount?",
-    "Do you offer business loans?",
-    "How are interest rates calculated?",
-    "How often do I make repayments?",
-    "Do you offer mobile banking?",
-    "What happens if I miss a repayment?",
-    "Can I top up my existing loan?",
-    "Are there any hidden charges?",
-    "What is the customer care number?",
-    "Where are your branches located?",
-    "How secure is my account?",
-    "What is the loan tenure?",
-    "Can I get a statement of account?",
-    "How do I update my account details?",
-    "Do you require collateral?",
-    "How do I close my account?",
-    "Can I nominate someone on my account?",
-    "How do I reset my PIN?",
-    "Do you offer ATM services?",
-    "Are there charges on withdrawals?",
-    "Can I get a loan without salary?",
-    "What happens on loan default?",
-    "How do I change my repayment schedule?",
-    "What are your operating hours?",
-    "Do you have an app?",
-    "How do I contact support?"
-]
+# --- Load all questions from CSV for Suggestions ---
+all_questions = bot.questions
 
-# --- Define Priority Starter Questions ---
+# Pre-prioritize most helpful, basic questions
 priority_questions = [
     "How do I apply for a loan?",
-    "What are the requirements for opening an account?"
+    "What are your interest rates?",
+    "How do I open an account?",
+    "How can I repay my loan?"
 ]
 
-# --- Function to Create Next Suggestions List ---
-def get_next_suggestions():
-    # Remove priority from master pool
-    remaining = [q for q in master_questions if q not in priority_questions]
-    random.shuffle(remaining)
-    # Always include 2 priority first, then 2 random
-    return priority_questions[:2] + remaining[:2]
+# Fallback random pool
+secondary_questions = [q for q in all_questions if q not in priority_questions]
 
-# --- Session State Setup ---
+# --- Suggestion Management in Session State ---
+if "suggestions" not in st.session_state:
+    st.session_state.suggestions = priority_questions.copy()
+
+def get_next_suggestions():
+    """ Rotate suggestions after each answer. """
+    # Always include the priority questions first if not used
+    remaining_priority = [q for q in priority_questions if q not in st.session_state.suggestions]
+    if remaining_priority:
+        return remaining_priority[:4]
+
+    # Otherwise, sample from secondary pool
+    return random.sample(secondary_questions, k=4)
+
+# --- Initialize suggested_input flags ---
 if "suggested_input" not in st.session_state:
     st.session_state.suggested_input = None
-if "suggestions" not in st.session_state:
-    st.session_state.suggestions = get_next_suggestions()
 
-# --- App Header ---
+if "suggested_input_submitted" not in st.session_state:
+    st.session_state.suggested_input_submitted = False
+
+# --- Title and Welcome Message ---
 st.title("💬 TrustMicro - Your AI FAQ Assistant")
 st.markdown(
     """
-    Hello! I'm TrustMicro, your friendly Microfinance assistant.  
-    Ask me about loans, savings, repayments, and more. I'm here to help 24/7. 🌟
+    Hello! I'm TrustMicro, your friendly Microfinance assistant.
+    Ask me about loans, savings, repayments, and more.
+    I'm here to help 24/7.
     """
 )
 st.divider()
 
-# --- Suggestions Section ---
-st.subheader("💡 Try asking one of these:")
-cols = st.columns(4)
-for i, (col, question) in enumerate(zip(cols, st.session_state.suggestions)):
+# --- Suggested Questions ---
+st.subheader("💡 Quick Questions")
+cols = st.columns(2)
+for i, question in enumerate(st.session_state.suggestions):
+    col = cols[i % 2]
     if col.button(f"❓ {question}", key=f"suggested_{i}"):
         st.session_state.suggested_input = question
+        st.session_state.suggested_input_submitted = True
 
 st.divider()
 
-# --- Manual Input Section ---
-st.subheader("🔎 Ask your own question:")
+# --- Input Field with Form ---
 with st.form(key="chat_form", clear_on_submit=True):
     user_input = st.text_input("Type your question here...")
     submitted = st.form_submit_button("Send")
@@ -129,24 +103,23 @@ with st.form(key="chat_form", clear_on_submit=True):
 final_input = None
 if submitted and user_input:
     final_input = user_input
-elif st.session_state.suggested_input:
-    final_input = st.session_state.suggested_input
+elif st.session_state.get("suggested_input_submitted"):
+    final_input = st.session_state.get("suggested_input")
 
-# --- Process Input and Respond ---
+# --- Answer Processing ---
 if final_input:
     question, answer, score = bot.get_best_match(final_input)
-
-    if score >= 0.60:
-        st.success(f"✅ **Answer:** {answer}")
+    if score >= 0.7:
+        st.success(f"**Answer:** {answer}")
     else:
-        st.error("⚠️ I'm sorry, I couldn't confidently answer that. Please try rephrasing your question.")
+        st.error("⚠️ I'm sorry, I couldn't confidently answer that. Please try rephrasing.")
         bot.save_unanswered(final_input)
         st.info("✨ *Your question has been saved for review to improve this assistant.*")
 
-    # After answering, generate new rotating suggestions
+    # After answering, rotate suggestions
     st.session_state.suggestions = get_next_suggestions()
     st.session_state.suggested_input = None
+    st.session_state.suggested_input_submitted = False
 
 # --- Footer ---
-st.divider()
 st.caption("🧭 Powered by TrustMicro AI | Built with ❤️ using Sentence Transformers and Streamlit")
