@@ -31,7 +31,7 @@ with st.sidebar:
 # --- Load and Cache Chatbot ---
 @st.cache_resource
 def load_bot():
-    with st.spinner("Loading AI model... Please wait ⏳"):
+    
         return FAQChatbot("faq_cleaned.csv")
 
 bot = load_bot()
@@ -40,45 +40,16 @@ bot = load_bot()
 if "history" not in st.session_state:
     st.session_state.history = []
 
-
-# --- Title and Welcome Message ---
-st.title("💬 TrustMicro - Your AI FAQ Assistant")
-st.markdown(
-    """
-    Hello! I'm TrustMicro, your friendly Microfinance assistant.
-    Ask me about loans, savings, repayments, and more.
-    I'm here to help 24/7.
-    """
-)
-st.divider()
-
-# --- Display Conversation History ABOVE the Input Box ---
-if st.session_state.history:
-    st.subheader("📜 Chat History")
-    for chat in st.session_state.history:
-        # User message
-        with st.chat_message("user"):
-            st.markdown(f"🧑‍💼 **You:** {chat['user']}")
-
-        # Bot response
-        with st.chat_message("assistant"):
-            st.markdown(chat['response'])
-            st.caption(f"🤖 *Confidence Score:* `{chat['score']:.2f}`")
-
-    st.divider()
-else:
-    st.info("🤖 Ready to answer your questions! Start by typing below.")
-
+if "new_message" not in st.session_state:
+    st.session_state.new_message = None
 
 # --- Input Field at Bottom (text input + button for instant response) ---
 with st.form(key="chat_form", clear_on_submit=True):
     user_input = st.text_input("Type your question here...")
     submitted = st.form_submit_button("Send")
 
-# --- Processing User Input Immediately ---
 if submitted and user_input:
     question, answer, score = bot.get_best_match(user_input)
-    response_text = ""
 
     if score >= 0.85:
         response_text = f"✅ **Answer:** {answer}"
@@ -97,12 +68,39 @@ if submitted and user_input:
         bot.save_unanswered(user_input)
         st.info("✨ *Your question has been saved for review to improve this assistant.*")
 
-    # Add interaction to conversation history
-    st.session_state.history.append({
+    # Save message instantly
+    st.session_state.new_message = {
         "user": user_input,
         "response": response_text,
         "score": score
-    })
+    }
+
+# --- Display Conversation History (new message first) ---
+st.title("💬 TrustMicro Assistant")
+st.markdown(
+    """
+    Hello! I'm TrustMicro, your Microfinance assistant.
+    Ask me about loans, savings, repayments, and more.
+    I'm here to help 24/7.
+    """
+)
+st.divider()
+
+if st.session_state.new_message:
+    st.session_state.history.append(st.session_state.new_message)
+    st.session_state.new_message = None  # Clear it after use
+
+if st.session_state.history:
+    st.subheader("📜 Chat History")
+    for chat in st.session_state.history:
+        with st.chat_message("user"):
+            st.markdown(f"🧑‍💼 **You:** {chat['user']}")
+        with st.chat_message("assistant"):
+            st.markdown(chat['response'])
+            st.caption(f"🤖 *Confidence Score:* `{chat['score']:.2f}`")
+    st.divider()
+else:
+    st.info("🤖 Ready to answer your questions! Start by typing below.")
 
 # --- Footer ---
-st.caption("🧭 Powered by TrustMicro AI")
+st.caption("🧭 Powered by TrustMicro AI | Built with ❤️ using Streamlit + Sentence Transformers")
