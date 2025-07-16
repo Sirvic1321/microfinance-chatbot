@@ -37,17 +37,7 @@ def load_bot():
 
 bot = load_bot()
 
-# --- Title and Welcome Message ---
-st.title("💬 TrustMicro - Your AI FAQ Assistant")
-st.markdown(
-    """
-    Hello! I'm TrustMicro, your friendly Microfinance assistant.  
-    Ask me about loans, savings, repayments, and more. I'm here to help 24/7. 🌟
-    """
-)
-st.divider()
-
-# --- Master Question Pool (from your CSV or defined here) ---
+# --- Master Questions Pool (from CSV or manually here) ---
 master_questions = [
     "How do I apply for a loan?",
     "What are the requirements for opening an account?",
@@ -90,16 +80,38 @@ master_questions = [
     "How do I contact support?"
 ]
 
-# --- Setup Session State ---
+# --- Define Priority Starter Questions ---
+priority_questions = [
+    "How do I apply for a loan?",
+    "What are the requirements for opening an account?"
+]
+
+# --- Function to Create Next Suggestions List ---
+def get_next_suggestions():
+    # Remove priority from master pool
+    remaining = [q for q in master_questions if q not in priority_questions]
+    random.shuffle(remaining)
+    # Always include 2 priority first, then 2 random
+    return priority_questions[:2] + remaining[:2]
+
+# --- Session State Setup ---
 if "suggested_input" not in st.session_state:
     st.session_state.suggested_input = None
 if "suggestions" not in st.session_state:
-    random.shuffle(master_questions)
-    st.session_state.suggestions = master_questions[:4]
+    st.session_state.suggestions = get_next_suggestions()
 
-# --- Suggested Questions UI ---
+# --- App Header ---
+st.title("💬 TrustMicro - Your AI FAQ Assistant")
+st.markdown(
+    """
+    Hello! I'm TrustMicro, your friendly Microfinance assistant.  
+    Ask me about loans, savings, repayments, and more. I'm here to help 24/7. 🌟
+    """
+)
+st.divider()
+
+# --- Suggestions Section ---
 st.subheader("💡 Try asking one of these:")
-
 cols = st.columns(4)
 for i, (col, question) in enumerate(zip(cols, st.session_state.suggestions)):
     if col.button(f"❓ {question}", key=f"suggested_{i}"):
@@ -107,33 +119,34 @@ for i, (col, question) in enumerate(zip(cols, st.session_state.suggestions)):
 
 st.divider()
 
-# --- Manual Input Field ---
+# --- Manual Input Section ---
 st.subheader("🔎 Ask your own question:")
 with st.form(key="chat_form", clear_on_submit=True):
     user_input = st.text_input("Type your question here...")
     submitted = st.form_submit_button("Send")
 
-# --- Determine which input to use ---
+# --- Decide Which Input to Process ---
 final_input = None
 if submitted and user_input:
     final_input = user_input
 elif st.session_state.suggested_input:
     final_input = st.session_state.suggested_input
 
-# --- Process Input ---
+# --- Process Input and Respond ---
 if final_input:
     question, answer, score = bot.get_best_match(final_input)
 
-    if score >= 0.7:
+    if score >= 0.60:
         st.success(f"✅ **Answer:** {answer}")
     else:
         st.error("⚠️ I'm sorry, I couldn't confidently answer that. Please try rephrasing your question.")
         bot.save_unanswered(final_input)
         st.info("✨ *Your question has been saved for review to improve this assistant.*")
 
-    # Reset suggested_input so it's not "sticky" after processing
+    # After answering, generate new rotating suggestions
+    st.session_state.suggestions = get_next_suggestions()
     st.session_state.suggested_input = None
 
 # --- Footer ---
 st.divider()
-st.caption("🧭 Powered by TrustMicro AI")
+st.caption("🧭 Powered by TrustMicro AI | Built with ❤️ using Sentence Transformers and Streamlit")
