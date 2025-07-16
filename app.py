@@ -40,45 +40,56 @@ bot = load_bot()
 # --- Session State Initialization ---
 if "suggestions_pool" not in st.session_state:
     st.session_state.suggestions_pool = [
-        "How do I apply for a loan?",
-        "What documents do I need for a loan?",
-        "What is the interest rate for loans?",
-        "How can I repay my loan?",
-        "How do I open an account?",
-        "Can I save money with TrustMicro?",
-        "How long does loan approval take?",
-        "Is there a penalty for late repayment?",
-        "Can I get a loan without collateral?",
-        "What types of loans do you offer?",
-        "What is the minimum savings amount?",
-        "How do I check my account balance?",
-        "Do you offer group loans?",
-        "Can I repay through mobile money?",
-        "What are your operating hours?",
-        "Where is your nearest branch?",
-        "How do I close my account?",
-        "Do you have an app?",
-        "Can I get a statement of account?",
-        "What is the maximum loan amount?",
-        "Do you have business loans?",
-        "What is your customer care number?",
-        "Can I top up an existing loan?",
-        "How do I change my account details?",
-        "Do you offer insurance products?",
-        "What happens if I can't repay?",
-        "How do I schedule a repayment?",
-        "Are your services Sharia compliant?",
-        "Do you charge account maintenance fees?",
-        "How do I contact TrustMicro?"
-    ]
+    "How do I apply for a loan?",
+    "What are the requirements for a microloan?",
+    "Can I apply for a loan without a salary account?",
+    "How long does loan approval take?",
+    "Can I apply for a loan if I have bad credit?",
+    "Do I need a guarantor to get a loan?",
+    "What is the minimum and maximum amount I can borrow?",
+    "How do I repay my loan?",
+    "What happens if I miss a repayment?",
+    "Can I repay my loan early?",
+    "Can I reschedule my loan repayment?",
+    "What is the loan repayment duration?",
+    "What interest rate do you charge on loans?",
+    "Is the interest rate fixed or variable?",
+    "Do interest rates change after loan approval?",
+    "How do you calculate interest on loans?",
+    "How do I open a savings account?",
+    "What is the minimum deposit to open an account?",
+    "Do you offer interest on savings accounts?",
+    "Can I open an account online?",
+    "Is there a savings plan for kids?",
+    "What’s the difference between savings and fixed deposit?",
+    "How do I register for USSD banking?",
+    "Can I check my balance using USSD?",
+    "Is there a mobile app I can use?",
+    "Can I transfer money with USSD?",
+    "Is USSD banking safe?",
+    "Are there any charges on savings accounts?",
+    "Do you charge a loan processing fee?",
+    "What is the penalty for late loan repayment?",
+    "Is there a fee to close my account?",
+    "How can I contact customer care?",
+    "Where is your head office located?",
+    "Can I speak to an agent online?",
+    "What should I do if I lose my ATM card?",
+    "How do I lodge a complaint?",
+    "What services do you offer?",
+    "Is the bank licensed?",
+    "How long have you been in operation?",
+    "What makes your bank different?"
+]
+
 
 if "suggestions" not in st.session_state:
     st.session_state.suggestions = [
-        "How do I apply for a loan?",
-        "How can I repay my loan?",
-        "How do I open an account?",
-        "What is the interest rate for loans?"
-    ]
+          "How do I apply for a loan?",
+    "What are the requirements for a microloan?",
+    "How do I open a savings account?",
+    "What is the minimum deposit to open an account?"
+]
 
 if "final_input" not in st.session_state:
     st.session_state.final_input = ""
