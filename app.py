@@ -15,42 +15,46 @@ with st.sidebar:
         """
         Welcome to the TrustMicro AI FAQ Assistant!
 
-        *Available topics:*  
-        - 💰 Loans  
-        - 💸 Savings  
-        - 📅 Repayments  
-        - 🏦 Account Opening  
-        - ❓ General Inquiries  
+        *Available topics:*    
+        - 💰 Loans    
+        - 💸 Savings    
+        - 📅 Repayments    
+        - 🏦 Account Opening    
+        - ❓ General Inquiries    
 
         ---  
-        **Tip:** Type naturally—I'll do my best to help you!
+        **Tip:** Type naturally—I'll do my best to help you!  
         """
     )
+    st.caption("🧭 Powered by TrustMicro AI")
 
 # --- Load and Cache Chatbot ---
 @st.cache_resource
 def load_bot():
-    st.info("Loading AI model... Please wait ⏳")
-    return FAQChatbot("faq_cleaned.csv")
+    with st.spinner("Loading AI model... Please wait ⏳"):
+        return FAQChatbot("faq_cleaned.csv")
 
 bot = load_bot()
 
-# --- Initialize Session State for Conversation History ---
+# --- Initialize Session State ---
 if "history" not in st.session_state:
     st.session_state.history = []
 
-# --- App Title and Welcome ---
+if "pending_input" not in st.session_state:
+    st.session_state.pending_input = ""
+
+# --- Title and Welcome Message ---
 st.title("💬 TrustMicro - Your AI FAQ Assistant")
 st.markdown(
     """
-    **Hello! I'm TrustMicro, your Microfinance assistant.**  
-    Ask me about **loans, savings, repayments**, and more.  
-    I'm here to help **24/7**. 
+    Hello! I'm TrustMicro, your friendly Microfinance assistant.
+    Ask me about loans, savings, repayments, and more.
+    I'm here to help 24/7.
     """
 )
 st.divider()
 
-# --- Display Chat History (ABOVE Input) ---
+# --- Display Conversation History ABOVE the Input Box ---
 if st.session_state.history:
     st.subheader("📜 Chat History")
     for chat in st.session_state.history:
@@ -58,22 +62,26 @@ if st.session_state.history:
         with st.chat_message("user"):
             st.markdown(f"🧑‍💼 **You:** {chat['user']}")
 
-        # Bot response with styling
+        # Bot response
         with st.chat_message("assistant"):
             st.markdown(chat['response'])
             st.caption(f"🤖 *Confidence Score:* `{chat['score']:.2f}`")
+
     st.divider()
 else:
-    st.info("*Ready to answer your questions!* Start by typing below.")
+    st.info("🤖 Ready to answer your questions! Start by typing below.")
 
-# --- Input Box at Bottom of App ---
-user_input = st.chat_input("Type your question here...")
+# --- Input Field at Bottom (handles lag issue) ---
+user_input = st.chat_input(
+    "Type your question here...", 
+    key="pending_input"
+)
 
-# --- Process User Input with Confidence Filter ---
+# --- Processing User Input Immediately ---
 if user_input:
     question, answer, score = bot.get_best_match(user_input)
+    response_text = ""
 
-    # Build a friendly, dynamic response
     if score >= 0.85:
         response_text = f"✅ **Answer:** {answer}"
     elif score >= 0.65:
@@ -81,16 +89,15 @@ if user_input:
             f"🤔 *I think you might be asking:* \n"
             f"**Q:** {question} \n"
             f"**A:** {answer} \n\n"
-            f"If this doesn't help, please try rephrasing your query!"
+            f"If this doesn't help, please try rephrasing for a better match! ✨"
         )
     else:
         response_text = (
             "⚠️ I'm sorry, I couldn't confidently answer that. "
             "Could you please rephrase your question?"
         )
-        # Save low-confidence questions for review
         bot.save_unanswered(user_input)
-        st.info("✨ *Your question has been saved to improve this assistant.*")
+        st.info("✨ *Your question has been saved for review to improve this assistant.*")
 
     # Add interaction to conversation history
     st.session_state.history.append({
@@ -99,6 +106,8 @@ if user_input:
         "score": score
     })
 
+    # Clear input for next question
+    st.session_state.pending_input = ""
+
 # --- Footer ---
-st.markdown("---")
-st.caption("🧭 Powered by **TrustMicro AI**")
+st.caption("🧭 Powered by TrustMicro AI")
