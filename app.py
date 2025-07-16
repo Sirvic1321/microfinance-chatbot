@@ -51,9 +51,9 @@ with st.form(key="chat_form", clear_on_submit=True):
 if submitted and user_input:
     question, answer, score = bot.get_best_match(user_input)
 
-    if score >= 0.85:
+    if score >= 0.60:
         response_text = f"✅ **Answer:** {answer}"
-    elif score >= 0.65:
+    elif score >= 0.55:
         response_text = (
             f"🤔 *I think you might be asking:* \n"
             f"**Q:** {question} \n"
