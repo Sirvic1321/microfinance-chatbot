@@ -10,7 +10,7 @@ st.set_page_config(
 
 # --- Sidebar Info ---
 with st.sidebar:
-    st.title("💼 TrustMicro")
+    st.title("TrustMicro")
     st.markdown(
         """
         Welcome to the **TrustMicro AI FAQ Assistant**!  
@@ -39,10 +39,10 @@ if "history" not in st.session_state:
     st.session_state.history = []
 
 # --- Title and Welcome Message ---
-st.title("💬 TrustMicro - Your AI FAQ Assistant")
+st.title("💬 TrustMicro - Your AI Assistant")
 st.markdown(
     """
-    **Hello!** I'm **TrustMicro**, your friendly Microfinance assistant.  
+    **Hello!** I'm **TrustMicro**, your Microfinance assistant.  
     Ask me about **loans**, **savings**, **repayments**, and more.  
     I'm here to help 24/7. 
     """
@@ -75,7 +75,7 @@ if user_input:
 
     if score >= 0.85:
         response_text = f"✅ **Answer:** {answer}"
-    elif score >= 0.65:
+    elif score >= 0.60:
         response_text = (
             f"🤔 *I think you might be asking:* \n"
             f"**Q:** {question} \n"
