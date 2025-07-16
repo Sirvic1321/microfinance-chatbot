@@ -105,9 +105,7 @@ if user_input:
         "response": response_text,
         "score": score
     })
-
-    # Clear input for next question
-    st.session_state.pending_input = ""
+    # Do not clear st.session_state.pending_input, Streamlit does not allow this for widget keys
 
 # --- Footer ---
 st.caption("🧭 Powered by TrustMicro AI")
