@@ -40,8 +40,6 @@ bot = load_bot()
 if "history" not in st.session_state:
     st.session_state.history = []
 
-if "pending_input" not in st.session_state:
-    st.session_state.pending_input = ""
 
 # --- Title and Welcome Message ---
 st.title("💬 TrustMicro - Your AI FAQ Assistant")
@@ -71,11 +69,8 @@ if st.session_state.history:
 else:
     st.info("🤖 Ready to answer your questions! Start by typing below.")
 
-# --- Input Field at Bottom (handles lag issue) ---
-user_input = st.chat_input(
-    "Type your question here...", 
-    key="pending_input"
-)
+# --- Input Field at Bottom ---
+user_input = st.chat_input("Type your question here...")
 
 # --- Processing User Input Immediately ---
 if user_input:
