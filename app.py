@@ -38,10 +38,7 @@ def load_bot():
 bot = load_bot()
 
 # --- Initialize Session State ---
-if "history" not in st.session_state:
-    st.session_state.history = []
-
-if "suggestions" not in st.session_state:
+if "suggestions_pool" not in st.session_state:
     st.session_state.suggestions_pool = [
         "How do I apply for a loan?",
         "What documents do I need for a loan?",
@@ -74,19 +71,23 @@ if "suggestions" not in st.session_state:
         "Do you charge account maintenance fees?",
         "How do I contact TrustMicro?"
     ]
-    st.session_state.suggestions = random.sample(
-        st.session_state.suggestions_pool, 4
-    )
 
-if "suggested_input" not in st.session_state:
-    st.session_state.suggested_input = ""
-    st.session_state.suggested_input_submitted = False
+if "suggestions" not in st.session_state:
+    # Priority initial questions
+    priority_questions = [
+        "How do I apply for a loan?",
+        "How can I repay my loan?",
+        "How do I open an account?",
+        "What is the interest rate for loans?"
+    ]
+    st.session_state.suggestions = priority_questions
 
-# --- Handle Suggestion Button Clicks with Proper State ---
-def on_suggestion_click(question):
-    st.session_state.suggested_input = question
-    st.session_state.suggested_input_submitted = True
-    st.experimental_rerun()
+if "last_user_input" not in st.session_state:
+    st.session_state.last_user_input = ""
+
+if "last_response" not in st.session_state:
+    st.session_state.last_response = ""
+    st.session_state.last_score = 0.0
 
 # --- Title and Welcome Message ---
 st.title("💬 TrustMicro - Your AI FAQ Assistant")
@@ -99,26 +100,38 @@ st.markdown(
 )
 st.divider()
 
-# --- User Input Field at Bottom (text input + button for instant response) ---
+# --- Show last response if any ---
+if st.session_state.last_user_input and st.session_state.last_response:
+    with st.chat_message("user"):
+        st.markdown(f"🧑‍💼 **You:** {st.session_state.last_user_input}")
+
+    with st.chat_message("assistant"):
+        st.markdown(st.session_state.last_response)
+        st.caption(f"🤖 *Confidence Score:* `{st.session_state.last_score:.2f}`")
+
+st.divider()
+
+# --- Input Field ---
 with st.form(key="chat_form", clear_on_submit=True):
     user_input = st.text_input("Type your question here...")
     submitted = st.form_submit_button("Send")
 
-# --- Process Input or Suggestion Click ---
+# --- Check if a suggestion was clicked ---
+suggestion_clicked = st.session_state.get("suggestion_clicked", None)
+
 final_input = None
 if submitted and user_input:
     final_input = user_input
-elif st.session_state.suggested_input_submitted:
-    final_input = st.session_state.suggested_input
-    st.session_state.suggested_input_submitted = False
+elif suggestion_clicked:
+    final_input = suggestion_clicked
+    st.session_state.suggestion_clicked = None
 
+# --- Process the question ---
 if final_input:
     question, answer, score = bot.get_best_match(final_input)
-    response_text = ""
-
-    if score >= 0.60:
+    if score >= 0.85:
         response_text = f"✅ **Answer:** {answer}"
-    elif score >= 0.55:
+    elif score >= 0.65:
         response_text = (
             f"🤔 *I think you might be asking:*  \n"
             f"**Q:** {question}  \n"
@@ -133,28 +146,22 @@ if final_input:
         bot.save_unanswered(final_input)
         st.info("✨ *Your question has been saved for review to improve this assistant.*")
 
-    # Show the answer
-    st.markdown("---")
-    with st.chat_message("assistant"):
-        st.markdown(response_text)
-        st.caption(f"🤖 *Confidence Score:* `{score:.2f}`")
+    st.session_state.last_user_input = final_input
+    st.session_state.last_response = response_text
+    st.session_state.last_score = score
 
-    # Rotate suggestions after each valid interaction
+    # Rotate suggestions to keep them fresh
     st.session_state.suggestions = random.sample(
         st.session_state.suggestions_pool, 4
     )
 
-# --- Suggested Questions Section ---
+    # Force rerun to show new chat
+    st.experimental_rerun()
+
+# --- Suggestion Buttons ---
 st.subheader("💡 Quick Questions")
 cols = st.columns(2)
 for i, question in enumerate(st.session_state.suggestions):
     col = cols[i % 2]
-    col.button(
-        f"❓ {question}",
-        key=f"suggested_{i}",
-        on_click=on_suggestion_click,
-        args=(question,)
-    )
-
-# --- Footer ---
-st.caption("🧭 Powered by TrustMicro AI")
+    if col.button(f"❓ {question}", key=f"suggestion_{i}"):
+        st.session_state.suggestion_clicked = question
