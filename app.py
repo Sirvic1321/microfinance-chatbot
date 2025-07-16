@@ -1,49 +1,35 @@
 import streamlit as st
-from chatbot import FAQChatbot
 import random
+from chatbot import FAQChatbot
 
-# --- Page Config ---
+# --- Page Configuration ---
 st.set_page_config(
     page_title="TrustMicro Chatbot 🤖",
     page_icon="💬",
     layout="centered"
 )
 
-# --- Master Suggestions ---
-MASTER_SUGGESTIONS = [
-    "How do I apply for a loan?",
-    "What are your savings rates?",
-    "How do I repay my loan?",
-    "What documents do I need to open an account?",
-    "Can I get a loan without collateral?",
-    "What is the interest rate on loans?",
-    "How long does it take to process a loan?",
-    "Can I open a savings account online?",
-    "Is there a penalty for late repayment?",
-    "How can I check my loan balance?"
-]
-
-# --- Sidebar ---
+# --- Sidebar Info ---
 with st.sidebar:
     st.title("💼 TrustMicro")
     st.markdown(
         """
-        Welcome to the TrustMicro AI FAQ Assistant!  
+        Welcome to the TrustMicro AI FAQ Assistant!
 
-        **Available Topics:**  
-        - 💰 Loans  
-        - 💸 Savings  
-        - 📅 Repayments  
-        - 🏦 Account Opening  
-        - ❓ General Inquiries  
+        *Available topics:*    
+        - 💰 Loans    
+        - 💸 Savings    
+        - 📅 Repayments    
+        - 🏦 Account Opening    
+        - ❓ General Inquiries    
 
-        ---
-        💡 *Tip:* Type naturally—I’ll do my best to help you!
+        ---  
+        **Tip:** Type naturally—I'll do my best to help you!  
         """
     )
     st.caption("🧭 Powered by TrustMicro AI")
 
-# --- Load Chatbot with Caching ---
+# --- Load and Cache Chatbot ---
 @st.cache_resource
 def load_bot():
     with st.spinner("Loading AI model... Please wait ⏳"):
@@ -51,34 +37,33 @@ def load_bot():
 
 bot = load_bot()
 
+# --- Load All Possible Suggestions from CSV Data ---
+if "all_suggestions" not in st.session_state:
+    all_questions = bot.faqs['question'].dropna().tolist()
+    st.session_state.all_suggestions = list(set(all_questions))
+
 # --- Initialize Session State ---
 if "history" not in st.session_state:
     st.session_state.history = []
 
-if "suggested" not in st.session_state:
-    st.session_state.suggested = random.sample(MASTER_SUGGESTIONS, 4)
+if "suggestions" not in st.session_state:
+    st.session_state.suggestions = random.sample(st.session_state.all_suggestions, k=min(5, len(st.session_state.all_suggestions)))
 
-# --- Helper: Refresh Suggested Questions ---
-def refresh_suggestions(last_question):
-    remaining = [q for q in MASTER_SUGGESTIONS if q.lower() != last_question.lower()]
-    new_suggestions = random.sample(remaining, 4) if len(remaining) >= 4 else remaining
-    st.session_state.suggested = new_suggestions
-
-# --- App Title ---
+# --- Title and Welcome Message ---
 st.title("💬 TrustMicro - Your AI FAQ Assistant")
 st.markdown(
     """
-    👋 Hello! I'm TrustMicro, your friendly Microfinance assistant.  
-    Ask me about loans, savings, repayments, and more.  
+    Hello! I'm TrustMicro, your friendly Microfinance assistant.
+    Ask me about loans, savings, repayments, and more.
     I'm here to help 24/7. 🌟
     """
 )
 st.divider()
 
-# --- Display Conversation History (latest first) ---
+# --- Display Conversation History (normal order) ---
 if st.session_state.history:
     st.subheader("📜 Chat History")
-    for chat in reversed(st.session_state.history):  # Latest on top
+    for chat in st.session_state.history:
         with st.chat_message("user"):
             st.markdown(f"🧑‍💼 **You:** {chat['user']}")
         with st.chat_message("assistant"):
@@ -86,37 +71,37 @@ if st.session_state.history:
             st.caption(f"🤖 *Confidence Score:* `{chat['score']:.2f}`")
     st.divider()
 else:
-    st.info("🤖 Ready to answer your questions! Start by typing below.")
+    st.info("🤖 Ready to answer your questions! Start by typing below or selecting a suggestion.")
 
-# --- Suggested Questions ---
+# --- Show Suggested Questions ---
 st.subheader("💡 Suggested Questions")
-suggested_cols = st.columns(len(st.session_state.suggested))
-for idx, question in enumerate(st.session_state.suggested):
-    if suggested_cols[idx].button(question):
-        st.session_state.user_input = question
-        st.session_state.submit_now = True
+cols = st.columns(3)
+for idx, q in enumerate(st.session_state.suggestions):
+    with cols[idx % 3]:
+        if st.button(q, key=f"suggestion_{idx}"):
+            st.session_state.selected_suggestion = q
 
-# --- User Input Field at Bottom ---
+# --- Input Field (text input + button) ---
 with st.form(key="chat_form", clear_on_submit=True):
-    user_input = st.text_input("Type your question here...")
+    if "selected_suggestion" in st.session_state:
+        default_value = st.session_state.pop("selected_suggestion")
+    else:
+        default_value = ""
+    user_input = st.text_input("Type your question here...", value=default_value)
     submitted = st.form_submit_button("Send")
 
-if "submit_now" in st.session_state and st.session_state.submit_now:
-    user_input = st.session_state.user_input
-    submitted = True
-    st.session_state.submit_now = False
-
-# --- Processing User Input ---
+# --- Processing User Input Immediately ---
 if submitted and user_input:
     question, answer, score = bot.get_best_match(user_input)
-    
-    if score >= 0.80:
+    response_text = ""
+
+    if score >= 0.8:
         response_text = f"✅ **Answer:** {answer}"
-    elif score >= 0.55:
+    elif score >= 0.6:
         response_text = (
-            f"🤔 *I think you might be asking:*  \n"
-            f"**Q:** {question}  \n"
-            f"**A:** {answer}  \n\n"
+            f"🤔 *I think you might be asking:* \n"
+            f"**Q:** {question} \n"
+            f"**A:** {answer} \n\n"
             f"If this doesn't help, please try rephrasing for a better match! ✨"
         )
     else:
@@ -127,15 +112,15 @@ if submitted and user_input:
         bot.save_unanswered(user_input)
         st.info("✨ *Your question has been saved for review to improve this assistant.*")
 
-    # Add to history
+    # Add interaction to conversation history
     st.session_state.history.append({
         "user": user_input,
         "response": response_text,
         "score": score
     })
 
-    # Refresh suggestions to avoid repeats
-    refresh_suggestions(user_input)
+    # Refresh suggestions from the master pool for next turn
+    st.session_state.suggestions = random.sample(st.session_state.all_suggestions, k=min(5, len(st.session_state.all_suggestions)))
 
 # --- Footer ---
 st.caption("🧭 Powered by TrustMicro AI")
