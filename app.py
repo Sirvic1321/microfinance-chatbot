@@ -53,7 +53,7 @@ if submitted and user_input:
 
     if score >= 0.60:
         response_text = f"✅ **Answer:** {answer}"
-    elif score >= 0.55:
+    elif score >= 0.50:
         response_text = (
             f"🤔 *I think you might be asking:* \n"
             f"**Q:** {question} \n"
